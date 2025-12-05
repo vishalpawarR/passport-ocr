@@ -12,7 +12,7 @@ export default function Home() {
 
   const handlePassportInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputPassportImg = e.target.files?.[0] ?? null
-    console.log(inputPassportImg)
+    // console.log(inputPassportImg)
 
     setFile(inputPassportImg)
     setRawData("")
@@ -35,9 +35,11 @@ export default function Home() {
       const worker = await createWorker("eng")
       const imgData = await worker.recognize(getFileURL)
 
-      console.log(imgData.data.text)
+      // console.log(imgData.data.text)
 
       setRawData(imgData.data.text)
+
+      console.log("RMZ text found", findRmzText(rawData))
     } catch (err) {
       const errored = err as Error
       console.error(errored.message)
@@ -45,6 +47,23 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function findRmzText(text: string): string | null {
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+
+    const candidate = lines.filter(
+      (line) => line.length > 0 && line.includes("<")
+    )
+
+    if (candidate.length >= 2) {
+      return candidate.slice(-2).join("\n")
+    }
+
+    return null
   }
 
   return (
