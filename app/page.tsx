@@ -99,6 +99,24 @@ export default function Home() {
     }
   }
 
+  function normalizeMrzLine(raw: string): string {
+    let cleaned = raw.toUpperCase()
+
+    cleaned = cleaned.replace(/[^A-Z0-9<]/g, "<")
+
+    cleaned = cleaned.replace(/[KL]/g, "<")
+
+    cleaned = cleaned.replace(/\s+/g, "")
+
+    if (cleaned.length > 44) {
+      cleaned = cleaned.slice(0, 44)
+    } else if (cleaned.length < 44) {
+      cleaned = cleaned.padEnd(44, "<")
+    }
+
+    return cleaned
+  }
+
   function findMrzText(text: string): string | null {
     const lines = text
       .split("\n")
@@ -110,7 +128,14 @@ export default function Home() {
     )
 
     if (candidate.length >= 2) {
-      return candidate.slice(-2).join("\n")
+      const lastTwo = candidate.slice(-2)
+      const line1 = normalizeMrzLine(lastTwo[0])
+      const line2 = normalizeMrzLine(lastTwo[1])
+
+      console.log("MRZ raw lines:", lastTwo)
+      console.log("MRZ normalized:", line1, line2)
+
+      return `${line1}\n${line2}`
     }
 
     return null
@@ -127,6 +152,8 @@ export default function Home() {
             Upload your passport image to automatically extract information
           </p>
         </div>
+
+        {file && <Image src="" />}
 
         <section className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
           {/* Upload Section */}
