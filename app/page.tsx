@@ -3,12 +3,31 @@
 import Image from "next/image"
 import { useState } from "react"
 import Tesseract, { createWorker } from "tesseract.js"
+import { parse as parseMrz, MrzResult } from "mrz"
+
+interface PassportForm {
+  firstName: string
+  lastName: string
+  passportNumber: string
+  dob: string
+  expiryDate: string
+  nationality: string
+}
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null)
   const [rawData, setRawData] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [form, setForm] = useState<PassportForm>({
+    firstName: "",
+    lastName: "",
+    passportNumber: "",
+    dob: "",
+    expiryDate: "",
+    nationality: "",
+  })
 
   const handlePassportInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputPassportImg = e.target.files?.[0] ?? null
@@ -17,6 +36,14 @@ export default function Home() {
     setFile(inputPassportImg)
     setRawData("")
     setError(null)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   async function handleOCR() {
@@ -37,9 +64,36 @@ export default function Home() {
 
       // console.log(imgData.data.text)
 
-      setRawData(imgData.data.text)
+      const text = imgData.data.text
 
-      console.log("MRZ text found", findMrzText(rawData))
+      setRawData(text)
+
+      const mrz = findMrzText(text)
+
+      console.log("mrz", mrz)
+
+      if (!mrz) {
+        setError(
+          "Could not detect MRZ. Try a clearer, straight passport image."
+        )
+        return
+      }
+
+      const parsed: MrzResult = parseMrz(mrz)
+
+      const fields = parsed.fields
+
+      console.log(fields)
+
+      setForm((prev) => ({
+        ...prev,
+        firstName: fields.firstName ?? prev.firstName,
+        lastName: fields.surname ?? prev.lastName,
+        passportNumber: fields.documentNumber ?? prev.passportNumber,
+        dob: fields.birthDate ?? prev.dob,
+        expiryDate: fields.expiryDate ?? prev.expiryDate,
+        nationality: fields.country ?? prev.nationality,
+      }))
     } catch (err) {
       const errored = err as Error
       console.error(errored.message)
@@ -105,12 +159,74 @@ export default function Home() {
         <div>
           {error && <p style={{ color: "red" }}>{error}</p>}
 
-          {rawData && (
+          {/* {rawData && (
             <div>
               <h2>Raw OCR Text</h2>
               <pre>{rawData}</pre>
             </div>
-          )}
+          )} */}
+        </div>
+
+        <div>
+          {/* 1 */}
+          <label>
+            First Name
+            <input
+              name="firstName"
+              value={form.firstName}
+              onChange={handleInputChange}
+            />
+          </label>
+
+          {/* 2 */}
+          <label>
+            Last Name
+            <input
+              name="lastName"
+              value={form.lastName}
+              onChange={handleInputChange}
+            />
+          </label>
+
+          {/* 3 */}
+          <label>
+            Passport Number
+            <input
+              name="passportNumber"
+              value={form.passportNumber}
+              onChange={handleInputChange}
+            />
+          </label>
+
+          {/* 4 */}
+          <label>
+            Date of Birth
+            <input
+              name="dob"
+              value={form.dob}
+              onChange={handleInputChange}
+            />
+          </label>
+
+          {/* 5 */}
+          <label>
+            Expiry Date
+            <input
+              name="expiryDate"
+              value={form.expiryDate}
+              onChange={handleInputChange}
+            />
+          </label>
+
+          {/* 6 */}
+          <label>
+            Nationality
+            <input
+              name="nationality"
+              value={form.nationality}
+              onChange={handleInputChange}
+            />
+          </label>
         </div>
       </section>
     </main>
