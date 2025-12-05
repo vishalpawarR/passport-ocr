@@ -153,8 +153,6 @@ export default function Home() {
           </p>
         </div>
 
-        {file && <Image src="" />}
-
         <section className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
           {/* Upload Section */}
           <div className="space-y-4">
