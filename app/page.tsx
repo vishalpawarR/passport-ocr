@@ -2,10 +2,11 @@
 
 import Image from "next/image"
 import { useState } from "react"
+import Tesseract, { createWorker } from "tesseract.js"
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null)
-  const [rawDat, setRawData] = useState<string>("")
+  const [rawData, setRawData] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -14,6 +15,36 @@ export default function Home() {
     console.log(inputPassportImg)
 
     setFile(inputPassportImg)
+    setRawData("")
+    setError(null)
+  }
+
+  async function handleOCR() {
+    if (!file) {
+      setError("Please upload a image first")
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    setRawData("")
+
+    try {
+      const getFileURL = URL.createObjectURL(file)
+
+      const worker = await createWorker("eng")
+      const imgData = await worker.recognize(getFileURL)
+
+      console.log(imgData.data.text)
+
+      setRawData(imgData.data.text)
+    } catch (err) {
+      const errored = err as Error
+      console.error(errored.message)
+      setError("Failed to read the text from the image")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -21,15 +52,27 @@ export default function Home() {
       <h1>Passport OCR</h1>
 
       <section>
-        <label htmlFor="passportImg">
-          <input
-            id="passportImg"
-            type="file"
-            onChange={handlePassportInput}
-            name="userPassport"
-            accept="image/*"
-          />
-        </label>
+        <div>
+          <label htmlFor="passportImg">
+            <input
+              id="passportImg"
+              type="file"
+              onChange={handlePassportInput}
+              name="userPassport"
+              accept="image/*"
+            />
+          </label>
+          <button
+            className={`
+              cursor-pointer
+              disabled:cursor-not-allowed disabled:opacity-50
+            `}
+            disabled={loading || !file}
+            onClick={handleOCR}
+          >
+            {loading ? "Reading..." : "Run OCR"}
+          </button>
+        </div>
         <div>
           {file ? (
             <p>
@@ -38,6 +81,16 @@ export default function Home() {
             </p>
           ) : (
             <p>Please add a image of the passport</p>
+          )}
+        </div>
+        <div>
+          {error && <p style={{ color: "red" }}>{error}</p>}
+
+          {rawData && (
+            <div>
+              <h2>Raw OCR Text</h2>
+              <pre>{rawData}</pre>
+            </div>
           )}
         </div>
       </section>
