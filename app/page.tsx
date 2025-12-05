@@ -39,7 +39,7 @@ export default function Home() {
 
       setRawData(imgData.data.text)
 
-      console.log("RMZ text found", findRmzText(rawData))
+      console.log("MRZ text found", findMrzText(rawData))
     } catch (err) {
       const errored = err as Error
       console.error(errored.message)
@@ -49,7 +49,7 @@ export default function Home() {
     }
   }
 
-  function findRmzText(text: string): string | null {
+  function findMrzText(text: string): string | null {
     const lines = text
       .split("\n")
       .map((line) => line.trim())
