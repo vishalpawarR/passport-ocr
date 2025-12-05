@@ -5,6 +5,9 @@ import { useState } from "react"
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null)
+  const [rawDat, setRawData] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handlePassportInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputPassportImg = e.target.files?.[0] ?? null
